@@ -147,6 +147,9 @@ def handle_dialog(res, req):
                     }, {
                         'title': 'Удали дом',
                         'hide': True
+                    }, {
+                        'title': 'Обратно',
+                        'hide': True
                     }
                 ]
                 sessionStorage['company'] = ''
@@ -287,6 +290,9 @@ def handle_dialog(res, req):
                                 }, {
                                     'title': 'Удали дом',
                                     'hide': True
+                                }, {
+                                    'title': 'Обратно',
+                                    'hide': True
                                 }
                             ]
                     else:
@@ -329,13 +335,18 @@ def handle_dialog(res, req):
                                 }, {
                                     'title': 'Удали дом',
                                     'hide': True
+                                }, {
+                                    'title': 'Обратно',
+                                    'hide': True
                                 }
                             ]
                         # Не запрещаем, если дома нет
                         else:
+                            f = True
                             for entity in req['request']['nlu']['entities']:
                                 if entity['type'] == 'YANDEX.GEO':
                                     if 'house_number' in entity['value'].keys():
+                                        f = False
                                         sessionStorage['address'] = ' '.join(req['request']['nlu']['tokens'][1:])
                                         geocoder_request = "http://geocode-maps.yandex.ru/1.x/?geocode={}&format=json" \
                                             .format(
@@ -359,18 +370,21 @@ def handle_dialog(res, req):
                                             }, {
                                                 'title': 'Удали дом',
                                                 'hide': True
+                                            }, {
+                                                'title': 'Обратно',
+                                                'hide': True
                                             }
                                         ]
-                                    else:
-                                        res['response'][
-                                            'text'] = f'Я не нашла ни одного дома, ' \
-                                                      f'{first_name.title()}! Попробуй ещё раз.'
-                                        res['response']['buttons'] = [
-                                            {
-                                                'title': 'Помощь',
-                                                'hide': False
-                                            }
-                                        ]
+                            if f:
+                                res['response'][
+                                    'text'] = f'Я не нашла ни одного дома, ' \
+                                              f'{first_name.title()}! Попробуй ещё раз.'
+                                res['response']['buttons'] = [
+                                    {
+                                        'title': 'Помощь',
+                                        'hide': False
+                                    }
+                                ]
                     # Печатаем адрес дома, если он указан
                     elif 'покажи адрес дома' == req['request']['original_utterance'].lower():
                         if sessionStorage['address']:
@@ -385,6 +399,9 @@ def handle_dialog(res, req):
                                 'hide': False
                             }, {
                                 'title': 'Удали дом',
+                                'hide': True
+                            }, {
+                                'title': 'Обратно',
                                 'hide': True
                             }
                         ]
