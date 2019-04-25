@@ -96,7 +96,6 @@ def handle_dialog(res, req):
             return
         # Показываем пользователю данные, если включен режим работы
         if sessionStorage['work'] == 1:
-            print(sessionStorage['organization'])
             try:
                 name = sessionStorage['organization']['properties']['CompanyMetaData']['name']
             except:
@@ -157,9 +156,8 @@ def handle_dialog(res, req):
                 return
             elif 'расстояние' in req['request']['nlu']['tokens']:
                 if sessionStorage['address']:
-                    print(sessionStorage['ll'], sessionStorage['archive'])
                     dist = get_distance([float(x) for x in sessionStorage['ll'].split(',')],
-                                        [float(x) for x in sessionStorage['archive'].split(',')])
+                                        [float(x) for x in sessionStorage['coord'].split(',')])
                     res['response']['text'] = 'От твоего дома до организации примерно {} метра'.format(dist)
                 else:
                     res['response'][
@@ -435,6 +433,26 @@ def handle_dialog(res, req):
                         json_response = response.json()
                         sessionStorage['organization'] = json_response["features"][0]
                         if sessionStorage['organization']:
+                            address = '+'.join(sessionStorage['organization']['properties']['CompanyMetaData']['address'].split())
+                            geocoder_request = "http://geocode-maps.yandex.ru/1.x/?geocode={}&format=json".format(
+                                address)
+                            try:
+                                response = requests.get(geocoder_request)
+                                if response:
+                                    json_response = response.json()
+                                    print(json_response)
+                                    toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0][
+                                        "GeoObject"]
+                                    toponym_coodrinates = toponym["Point"]["pos"]
+                                    sessionStorage['coord'] = ','.join(toponym_coodrinates.split())
+                                    print(sessionStorage['coord'])
+                                else:
+                                    print("Ошибка выполнения запроса:")
+                                    print(geocoder_request)
+                                    print("Http статус:", response.status_code, "(", response.reason, ")")
+                            except:
+                                print("Запрос не удалось выполнить. Проверьте подключение к сети Интернет.")
+                            # sessionStorage['coord'] = sessionStorage['organization']
                             sessionStorage['work'] = 1
                             res['response'][
                                 'text'] = f'Организация успешно найдена, ' \
